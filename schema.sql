@@ -50,3 +50,9 @@ UPDATE questions SET posted_date = to_timestamp(unix_date / 1000) AT TIME ZONE '
 
 UPDATE answers SET posted_date = to_timestamp(unix_date / 1000) AT TIME ZONE 'UTC';
 
+CREATE INDEX product_id_index ON questions(product_id);
+
+CREATE INDEX question_id_index ON answers(question_id);
+
+CREATE INDEX answer_id_index ON photos(answer_id);
+
