@@ -1,65 +1,60 @@
-require('dotenv').config();
 const express = require('express');
-const path = require('path');
-const axios = require('axios');
-const morgan = require('morgan');
-const cloudinary = require('cloudinary').v2;
-const compression = require('compression');
-const config = require('../config.js');
+const db = require('../database/db.js');
+require('dotenv').config();
 
-const auth = `${config.GITHUB_APIKEY}`;
 const app = express();
 
-app.use(compression());
-app.use(express.json({ limit: '50mb' }));
-app.use(express.static(path.join(__dirname, '../dist')));
-app.use(morgan('dev'));
+app.use(express.json());
 
-// Add authorization API key, pass requests to API with axios and return responses to client
-app.all('/api/*', (req, res) => {
-  console.log('API request received: ', req.method, ' to url ', req.originalUrl);
-  axios({
-    method: req.method,
-    url: req.originalUrl.slice(4),
-    baseURL: 'https://app-hrsei-api.herokuapp.com/api/fec2/hr-rfp/',
-    headers: { Authorization: auth },
-    data: req.body,
-  }).then((response) => {
-    res.status(response.status).json(response.data);
-    console.log('API call successful, status: ', response.status);
-  }).catch((err) => {
-    res.status(500).json({ message: err });
-    if (err.response) {
-      console.log('Error received from API: ', err.response.status, '\n Data: ', err.response.data, '\n Headers: ', err.response.headers);
-    } else if (err.request) {
-      console.log('Error, request made no response received: ', err.request);
-    } else {
-      console.log('Error, no request sent: ', err.message);
-    }
-  });
-});
-
-// Make cloudinary API request to upload photo and return url from response to client
-app.post('/photos', (req, res) => {
-  console.log('Photos post request received to url ', req.originalUrl);
-  const fileURL = req.body.url;
-  cloudinary.uploader.upload(fileURL, { format: 'jpg' })
-    .then((response) => {
-      res.status(200).json(response.secure_url);
+// get questions
+app.get('/questions', (req, res) => {
+  const productId = 40712;
+  db.getQuestions(productId)
+    .then((result) => {
+      console.log('qs received');
+      res.send(result);
     })
-    .catch((err) => {
-      res.status(500).send('Error posting photo to server');
-      if (err.response) {
-        console.log('Error received from API: ', err.response.status, '\n Data: ', err.response.data, '\n Headers: ', err.response.headers);
-      } else if (err.request) {
-        console.log('Error, request made no response received: ', err.request);
-      } else {
-        console.log('Error, no request sent: ', err);
-      }
+    .catch((error) => {
+      res.send(error);
     });
 });
 
-const PORT = process.env.PORT || 5000;
-app.listen(PORT, () => {
-  console.log(`Server listening at port: ${PORT}`);
+// post question
+app.post('/questions', (req, res) => {
+  db.addQuestion(req.body)
+    .then(() => {
+      console.log('question successfully posted');
+      res.sendStatus(200);
+    })
+    .catch(() => {
+      console.log('error adding question');
+      res.sendStatus(500);
+    });
+});
+
+// get answers + photos
+app.get('/answers', (req, res) => {
+  const questionId = 143325;
+  db.getAnswers(questionId)
+    .then((result) => {
+      console.log('answers received');
+      res.send(result);
+    });
+});
+
+// post answer + photos
+app.post('/answers', (req, res) => {
+  db.addAnswer(req.body)
+    .then(() => {
+      console.log('answer posted successfully');
+      res.sendStatus(200);
+    })
+    .catch(() => {
+      console.log('error posting answer');
+      res.sendStatus(500);
+    });
+});
+
+app.listen(3000, () => {
+  console.log('listening on port 3000');
 });
