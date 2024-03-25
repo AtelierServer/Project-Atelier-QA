@@ -3,18 +3,17 @@ const { Client } = require('pg');
 require('dotenv').config();
 
 module.exports.getQuestions = (productId) => {
-  console.log('in db.js');
+  console.log('in db.js getting questions');
   const client = new Client({
     user: process.env.USER,
     host: process.env.HOST,
     database: process.env.DATABASE,
     password: process.env.PASSWORD,
-    port: process.env.PORT,
+    port: process.env.PGPORT,
   });
+  const getQuestionQuery = `SELECT * FROM questions WHERE product_id = '${productId}' AND reported = 0;`;
   return client.connect()
-    .then(() => {
-      return client.query(`SELECT * FROM questions WHERE product_id = '${productId}'`)
-    })
+    .then(() => client.query(getQuestionQuery))
     .then((result) => {
       console.log('question query successful');
       return result.rows;
@@ -25,8 +24,8 @@ module.exports.getQuestions = (productId) => {
     })
     .finally(() => {
       client.end();
-    })
-}
+    });
+};
 
 module.exports.getAnswers = (questionId) => {
   console.log('in db.js getting answers');
@@ -37,10 +36,9 @@ module.exports.getAnswers = (questionId) => {
     password: process.env.PASSWORD,
     port: process.env.PORT,
   });
+  const getAnswerQuery = `SELECT * FROM answers WHERE question_id = '${questionId}' AND reported = 0;`;
   return client.connect()
-    .then(() => {
-      return client.query(`SELECT * FROM answers WHERE question_id = '${questionId}'`)
-    })
+    .then(() => client.query(getAnswerQuery))
     .then((result) => {
       console.log('answers query successful');
       return result.rows;
@@ -51,11 +49,11 @@ module.exports.getAnswers = (questionId) => {
     })
     .finally(() => {
       client.end();
-    })
-}
+    });
+};
 
-module.exports.addQuestion = (newQuestion) => {
-  console.log('in db.js POSTING answers');
+module.exports.addQuestion = (questionToAdd) => {
+  console.log('in db.js POSTING question');
   const client = new Client({
     user: process.env.USER,
     host: process.env.HOST,
@@ -63,12 +61,13 @@ module.exports.addQuestion = (newQuestion) => {
     password: process.env.PASSWORD,
     port: process.env.PORT,
   });
+  const reported = 0;
+  const helpfulness = 0;
+  const addQuestionQuery = `INSERT INTO questions (id, product_id, question_body, asker_name, asker_email, reported, question_helpfulness) VALUES (DEFAULT, '${questionToAdd.product_id}', '${questionToAdd.body}', '${questionToAdd.name}', '${questionToAdd.email}', '${reported}', '${helpfulness}');`;
   return client.connect()
-    .then(() => {
-      return client.query(`INSERT INTO questions (product_id, question_body, asker_name, asker_email, reported, question_helpfulness) VALUES ('${newQuestion.product_id}', '${newQuestion.question_body}', '${newQuestion.asker_name}', '${newQuestion.asker_email}', '${newQuestion.reported}', '${newQuestion.question_helpfulness}')`)
-    })
+    .then(() => client.query(addQuestionQuery))
     .then((result) => {
-      console.log('answers query successful');
+      console.log('successfully added question');
       return result.rows;
     })
     .catch((error) => {
@@ -77,5 +76,32 @@ module.exports.addQuestion = (newQuestion) => {
     })
     .finally(() => {
       client.end();
+    });
+};
+
+module.exports.addAnswer = (answerToAdd) => {
+  console.log('in db.js POSTING answer');
+  const client = new Client({
+    user: process.env.USER,
+    host: process.env.HOST,
+    database: process.env.DATABASE,
+    password: process.env.PASSWORD,
+    port: process.env.PORT,
+  });
+  const reported = 0;
+  const helpfulness = 0;
+  const addAnswerQuery = `INSERT INTO answers (question_id, body, answerer_name, answerer_email, reported, helpfulness) VALUES ('${answerToAdd.question_id}', '${answerToAdd.body}', '${answerToAdd.name}', '${answerToAdd.email}', '${reported}', '${helpfulness}');`;
+  return client.connect()
+    .then(() => client.query(addAnswerQuery))
+    .then((result) => {
+      console.log('successfully added answer');
+      return result.rows;
     })
-}
+    .catch((error) => {
+      console.error('Error executing query:', error);
+      throw error;
+    })
+    .finally(() => {
+      client.end();
+    });
+};
