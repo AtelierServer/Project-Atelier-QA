@@ -47,12 +47,12 @@ CREATE TABLE photos (
 \copy photos FROM './database/data/answers_photos.csv' WITH (FORMAT csv, DELIMITER ',', HEADER true, NULL 'null');
 
 UPDATE questions SET posted_date = to_timestamp(unix_date / 1000) AT TIME ZONE 'UTC';
-
 UPDATE answers SET posted_date = to_timestamp(unix_date / 1000) AT TIME ZONE 'UTC';
 
 CREATE INDEX product_id_index ON questions(product_id);
-
 CREATE INDEX question_id_index ON answers(question_id);
-
 CREATE INDEX answer_id_index ON photos(answer_id);
 
+SELECT setval('questions_id_seq', (SELECT MAX(id) FROM questions));
+SELECT setval('answers_id_seq', (SELECT MAX(id) FROM answers));
+SELECT setval('photos_id_seq', (SELECT MAX(id) FROM photos));
