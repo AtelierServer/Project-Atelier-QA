@@ -3,10 +3,8 @@ const express = require('express');
 const router = express.Router();
 const db = require('../../database/db.js');
 
-// get questions
-router.get('/questions', (req, res) => {
-  const productId = 40718;
-  db.getQuestions(productId)
+router.get('/qa/questions/:product_id', (req, res) => {
+  db.getQuestions(req.params.product_id)
     .then((result) => {
       console.log('qs received');
       res.send(result);
@@ -16,8 +14,16 @@ router.get('/questions', (req, res) => {
     });
 });
 
-// post question
-router.post('/questions', (req, res) => {
+router.get('/qa/questions/:question_id/answers', (req, res) => {
+  db.getAnswers(req.params.question_id)
+    .then((result) => {
+      console.log('answers received');
+      res.send(result);
+    });
+});
+
+router.post('/qa/questions', (req, res) => {
+  console.log(req.body);
   db.addQuestion(req.body)
     .then(() => {
       console.log('question successfully posted');
@@ -29,18 +35,7 @@ router.post('/questions', (req, res) => {
     });
 });
 
-// get answers + photos
-router.get('/answers', (req, res) => {
-  const questionId = 143325;
-  db.getAnswers(questionId)
-    .then((result) => {
-      console.log('answers received');
-      res.send(result);
-    });
-});
-
-// post answer + photos
-router.post('/answers', (req, res) => {
+router.post('/qa/answers', (req, res) => {
   db.addAnswer(req.body)
     .then(() => {
       console.log('answer posted successfully');
