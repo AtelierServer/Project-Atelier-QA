@@ -1,19 +1,22 @@
-const { Client } = require('pg');
+const { Pool, Client } = require('pg');
 
 require('dotenv').config();
 
 module.exports.getQuestions = (productId) => {
   console.log('in db.js getting questions');
-  const client = new Client({
+  const pool = new Pool({
     user: process.env.USER,
     host: process.env.HOST,
     database: process.env.DATABASE,
     password: process.env.PASSWORD,
     port: process.env.PGPORT,
+    max: 20,
+    idleTimeoutMillis: 10000,
+    connectionTimeoutMillis: 2000,
   });
   const getQuestionQuery = `SELECT * FROM questions WHERE product_id = '${productId}' AND reported = 0;`;
-  return client.connect()
-    .then(() => client.query(getQuestionQuery))
+  return pool.connect()
+    .then(() => pool.query(getQuestionQuery))
     .then((result) => {
       console.log('question query successful');
       return result.rows;
@@ -21,9 +24,6 @@ module.exports.getQuestions = (productId) => {
     .catch((error) => {
       console.error('Error executing query:', error);
       throw error;
-    })
-    .finally(() => {
-      client.end();
     });
 };
 
